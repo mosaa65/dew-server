@@ -12,11 +12,16 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 🧠 التخزين المؤقت للرسائل والمستخدمين
+// 🧠 تخزين مؤقت
 let messages = [];
 let users = [];
 
-// 📁 إعداد تخزين الوسائط باستخدام multer
+// 🟢 صفحة ترحيبية
+app.get('/', (req, res) => {
+  res.send('🚀 dew-server is live and ready for chat!');
+});
+
+// 🟢 رفع وسائط
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = 'uploads/';
@@ -30,10 +35,8 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
-
 const upload = multer({ storage: storage });
 
-// 🟢 رفع صورة/فيديو
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
@@ -43,41 +46,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
   res.status(200).json({ url: fileUrl });
 });
 
-// ✅ إرسال رسالة جديدة
-app.post('/messages', (req, res) => {
-  const { text, sender, receiver, timestamp, mediaUrl, mediaType } = req.body;
-
-  if (!sender || !receiver || !timestamp) {
-    return res.status(400).json({ error: 'Missing sender, receiver, or timestamp' });
-  }
-
-  const msg = {
-    text,
-    sender,
-    receiver,
-    timestamp,
-    mediaUrl,
-    mediaType,
-  };
-
-  messages.push(msg);
-  res.json({ status: 'Message saved', msg });
-});
-
-// ✅ جلب كل الرسائل
-app.get('/messages', (req, res) => {
-  res.json(messages);
-});
-
-// ✅ حذف كل الرسائل
-app.delete('/messages', (req, res) => {
-  messages = [];
-  res.json({ status: 'All messages deleted' });
-});
-
-// ✅ تسجيل مستخدم
+// 🟢 تسجيل مستخدم جديد
 app.post('/users', (req, res) => {
   const { email, name } = req.body;
+  console.log(`🟢 تسجيل: ${email} - ${name}`);
 
   if (!email || !name) {
     return res.status(400).json({ error: 'Missing email or name' });
@@ -91,7 +63,7 @@ app.post('/users', (req, res) => {
   res.json({ status: 'User saved', email, name });
 });
 
-// ✅ البحث عن مستخدم بالإيميل
+// 🟢 البحث عن مستخدم
 app.get('/users', (req, res) => {
   const { email } = req.query;
 
@@ -103,7 +75,36 @@ app.get('/users', (req, res) => {
   }
 });
 
-// ✅ تشغيل السيرفر
+// ✅ عرض كل المستخدمين (جديد)
+app.get('/users/all', (req, res) => {
+  res.json(users);
+});
+
+// 🟢 إرسال رسالة
+app.post('/messages', (req, res) => {
+  const { text, sender, receiver, timestamp, mediaUrl, mediaType } = req.body;
+
+  if (!sender || !receiver || !timestamp) {
+    return res.status(400).json({ error: 'Missing sender, receiver, or timestamp' });
+  }
+
+  const msg = { text, sender, receiver, timestamp, mediaUrl, mediaType };
+  messages.push(msg);
+  res.json({ status: 'Message saved', msg });
+});
+
+// 🟢 جلب الرسائل
+app.get('/messages', (req, res) => {
+  res.json(messages);
+});
+
+// 🟢 حذف الرسائل
+app.delete('/messages', (req, res) => {
+  messages = [];
+  res.json({ status: 'All messages deleted' });
+});
+
+// 🟢 تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
